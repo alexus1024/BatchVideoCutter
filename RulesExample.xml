@@ -1,4 +1,3 @@
-﻿<work>
-	<cut input="C:\someInputVideo.MP4" from="00:00:00" to="00:02:28" output="C:\Temp\SomeOutputVideo1"/>
-	<cut input="C:\someInputVideo.MP4" from="00:05:00" len="00:00:10" output="C:\Temp\SomeOutputVideo2"/>
+﻿<work logo="sampleLogo.png">
+	<cut input="C:\Temp\SomeSourceVideo.avi" from="00:14:18" to="00:14:37" output="C:\Temp\OutputVideo1.mp4"/>
 </work>
