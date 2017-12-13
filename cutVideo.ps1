@@ -1,5 +1,10 @@
-﻿$ffmpeg = "E:\Program_Files\ffmpeg-20140906-git-1654ca7-win64-static\bin\"
-$rules = "E:\dev\ffmpeg\testrules.xml"
+﻿param (
+    [string]$ffmpeg,
+    [string]$rules
+)
+
+
+
 $latestFfmpegUrl32 = 'http://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.7z'
 $latestFfmpegUrl64 = 'http://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.7z'
 
@@ -7,7 +12,7 @@ $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 chcp 65001
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-if(!(Test-Path $ffmpeg)){
+if(!$ffmpeg -or !(Test-Path $ffmpeg)){
 
     $downloadPath = 'ffmpeg.7z'
     Write-Output ('Не нейден ffmpeg. Скачиваем в {0}...' -f $downloadPath)
@@ -15,16 +20,17 @@ if(!(Test-Path $ffmpeg)){
     $downloadUrl =     if ([environment]::Is64BitOperatingSystem) {$latestFfmpegUrl64} else {$latestFfmpegUrl32}
 
     $web = New-Object System.Net.WebClient
-    #$web.DownloadFile($downloadUrl, $downloadPath)
+    
+    $web.DownloadFile($downloadUrl, $downloadPath)
 
    explorer $downloadPath;
    $fullDownloadPath = [System.IO.Path]::GetFullPath($downloadPath)
-   Write-Output 'Распакуйте и укажите путь в переменную $ffmpeg'
+   Write-Output 'загрузка завершена. Распакуйте и укажите путь в к папке bin в параметре -ffmpeg'
    break
 }
 
-if(!(Test-Path $rules)){
-    Write-Error 'Не найден файл с правилами'
+if(!$rules -or !(Test-Path $rules)){
+    Write-Error 'Не найден файл с правилами, передайте правильный путь к файлу в параметре -rules'
     break
 }
 
@@ -43,6 +49,7 @@ foreach($nodeRaw in Select-Xml  "/work/cut" $rules){
 
         Write-Output "Создана директория $outDir"
     }
+    # TODO: check invalid filenames (?\/:*<>)
 }
 
 if($notFoundInput.Count -gt 0){
@@ -87,7 +94,7 @@ foreach($nodeRaw in Select-Xml  "/work/cut" $rules){
         $ffmpegParams = "-i", $node.input, "-i", $logoFilename, "-filter_complex", "[1]scale=$($logoWidth):$($logoWidth)/a [logo]; [0][logo]overlay=main_w-overlay_w-10:10", "-ss", $node.from, "-t", $len, "-y", "-loglevel", "error", $node.output
 
     }else{
-        # если логотип не вставляем - включаем копирование потогов, чтобы не пережимать видео
+        # если логотип не вставляем - включаем копирование потоков, чтобы не пережимать видео
         $ffmpegParams = "-i", $node.input, "-ss", $node.from, "-c", "copy",  "-t", $len, "-y", "-loglevel", "error", $node.output    
     }
     
@@ -98,7 +105,7 @@ foreach($nodeRaw in Select-Xml  "/work/cut" $rules){
         (& "$($ffmpeg)ffmpeg.exe" $ffmpegParams)
         Write-Output "Задача $counter выполнена..."
     }catch{
-        
+        // TODO: имя файла указать либо строку файла правил
         Write-Warning "Задача $counter : Ошибка. $($_.Exception)"
         $cutErrors += $error
     }
